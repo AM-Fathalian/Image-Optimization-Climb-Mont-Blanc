@@ -53,6 +53,14 @@ perf: $(EXECUTABLE)
 	perf record -g -F 999 ./$(EXECUTABLE) 1
 	perf report
 
+###//////////////////////////////////////
+# Valgrind
+# This rule runs the program under Valgrind's callgrind tool and generates a report
+valgrind: $(EXECUTABLE)
+	valgrind --tool=callgrind ./$(EXECUTABLE) 1
+	callgrind_annotate callgrind.out.* > callgrind_analysis.txt
+###//////////////////////////////////////
+
 ifeq ($(VERSION), c)
 zip: $(C_SOURCES) $(CPP_SOURCES) $(HEADERS)
 	zip submission_c.zip ppm.c ppm.h image_processing_c.c
