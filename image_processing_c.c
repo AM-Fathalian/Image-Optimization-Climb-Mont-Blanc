@@ -10,7 +10,9 @@
 // http://7-themes.com/6971875-funny-flowers-pictures.html
 
 typedef struct {
-     double red,green,blue;
+     
+	//double red,green,blue;
+	float red, green, blue; // [1] double TO float change
 } AccuratePixel;
 
 typedef struct {
@@ -20,17 +22,25 @@ typedef struct {
 
 // Convert ppm to high precision format.
 AccurateImage *convertToAccurateImage(PPMImage *image) {
+	//[1] Added int size
+	int size = image->x * image->y;
+	///
 	// Make a copy
-	AccurateImage *imageAccurate;
-	imageAccurate = (AccurateImage *)malloc(sizeof(AccurateImage));
-	imageAccurate->data = (AccuratePixel*)malloc(image->x * image->y * sizeof(AccuratePixel));
-	for(int i = 0; i < image->x * image->y; i++) {
-		imageAccurate->data[i].red   = (double) image->data[i].red;
-		imageAccurate->data[i].green = (double) image->data[i].green;
-		imageAccurate->data[i].blue  = (double) image->data[i].blue;
-	}
+	AccurateImage *imageAccurate = (AccurateImage *)malloc(sizeof(AccurateImage));
+	//imageAccurate = (AccurateImage *)malloc(sizeof(AccurateImage)); //[1]
+	imageAccurate->data = (AccuratePixel*)malloc(size * sizeof(AccuratePixel));
+	//[1] added here.
 	imageAccurate->x = image->x;
 	imageAccurate->y = image->y;
+	
+	for(int i = 0; i < size; i++) {
+		imageAccurate->data[i].red   = (float) image->data[i].red; // [1] double TO float change
+		imageAccurate->data[i].green = (float) image->data[i].green; // [1] double TO float change
+		imageAccurate->data[i].blue  = (float) image->data[i].blue; // [1] double TO float change
+	}
+	//[1] moving upside
+	// imageAccurate->x = image->x;
+	// imageAccurate->y = image->y;
 	
 	return imageAccurate;
 }
