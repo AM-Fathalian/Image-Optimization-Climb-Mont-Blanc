@@ -62,68 +62,132 @@ PPMImage * convertToPPPMImage(AccurateImage *imageIn) {
 }
 
 // blur one color channel
-void blurIteration(AccurateImage *imageOut, AccurateImage *imageIn, int colourType, int size) {
+// void blurIteration(AccurateImage *imageOut, AccurateImage *imageIn, int colourType, int size) {
 	
-	// Iterate over each pixel
-	for(int senterX = 0; senterX < imageIn->x; senterX++) {
+// 	// Iterate over each pixel
+// 	for(int senterX = 0; senterX < imageIn->x; senterX++) {
 
-		for(int senterY = 0; senterY < imageIn->y; senterY++) {
+// 		for(int senterY = 0; senterY < imageIn->y; senterY++) {
 
-			// For each pixel we compute the magic number
-			double sum = 0;
-			int countIncluded = 0;
-			for(int x = -size; x <= size; x++) {
+// 			// For each pixel we compute the magic number
+// 			double sum = 0;
+// 			int countIncluded = 0;
+// 			for(int x = -size; x <= size; x++) {
 
-				for(int y = -size; y <= size; y++) {
-					int currentX = senterX + x;
-					int currentY = senterY + y;
+// 				for(int y = -size; y <= size; y++) {
+// 					int currentX = senterX + x;
+// 					int currentY = senterY + y;
 
-					// Check if we are outside the bounds
-					if(currentX < 0)
-						continue;
-					if(currentX >= imageIn->x)
-						continue;
-					if(currentY < 0)
-						continue;
-					if(currentY >= imageIn->y)
-						continue;
+// 					// Check if we are outside the bounds
+// 					if(currentX < 0)
+// 						continue;
+// 					if(currentX >= imageIn->x)
+// 						continue;
+// 					if(currentY < 0)
+// 						continue;
+// 					if(currentY >= imageIn->y)
+// 						continue;
 
-					// Now we can begin
-					int numberOfValuesInEachRow = imageIn->x;
-					int offsetOfThePixel = (numberOfValuesInEachRow * currentY + currentX);
-					if(colourType == 0)
-						sum += imageIn->data[offsetOfThePixel].red;
-					if(colourType == 1)
-						sum += imageIn->data[offsetOfThePixel].green;
-					if(colourType == 2)
-						sum += imageIn->data[offsetOfThePixel].blue;
+// 					// Now we can begin
+// 					int numberOfValuesInEachRow = imageIn->x;
+// 					int offsetOfThePixel = (numberOfValuesInEachRow * currentY + currentX);
+// 					if(colourType == 0)
+// 						sum += imageIn->data[offsetOfThePixel].red;
+// 					if(colourType == 1)
+// 						sum += imageIn->data[offsetOfThePixel].green;
+// 					if(colourType == 2)
+// 						sum += imageIn->data[offsetOfThePixel].blue;
 
-					// Keep track of how many values we have included
-					countIncluded++;
-				}
+// 					// Keep track of how many values we have included
+// 					countIncluded++;
+// 				}
 
+// 			}
+
+// 			// Now we compute the final value
+// 			double value = sum / countIncluded;
+
+
+// 			// Update the output image
+// 			int numberOfValuesInEachRow = imageOut->x; // R, G and B
+// 			int offsetOfThePixel = (numberOfValuesInEachRow * senterY + senterX);
+// 			if(colourType == 0)
+// 				imageOut->data[offsetOfThePixel].red = value;
+// 			if(colourType == 1)
+// 				imageOut->data[offsetOfThePixel].green = value;
+// 			if(colourType == 2)
+// 				imageOut->data[offsetOfThePixel].blue = value;
+// 		}
+
+// 	}
+	
+// }
+
+//**Experminet [2]; Integration summation
+//////////////////////
+
+
+
+//////////////////////
+
+//**Experminet [2]; changing blur algorithm w/o parallelization
+
+//which is Split the 2D blur into two 1D passes (horizontal + vertical):
+// Horizontal blur pass
+void horizontalBlur(AccurateImage *imageOut, AccurateImage *imageIn, int colourType, int size) {
+    for (int y = 0; y < imageIn->y; y++) {
+        for (int x = 0; x < imageIn->x; x++) {
+            float sum = 0.0f;
+            int count = 0;
+            for (int dx = -size; dx <= size; dx++) {
+                int currentX = x + dx;
+                if (currentX < 0 || currentX >= imageIn->x) continue;
+                int offset = y * imageIn->x + currentX;
+                sum += (colourType == 0) ? imageIn->data[offset].red :
+                       (colourType == 1) ? imageIn->data[offset].green : imageIn->data[offset].blue;
+                count++;
+            }
+            int outOffset = y * imageOut->x + x;
+            float avg = sum / count;
+            if (colourType == 0) imageOut->data[outOffset].red = avg;
+            else if (colourType == 1) imageOut->data[outOffset].green = avg;
+            else imageOut->data[outOffset].blue = avg;
+        }
+    }
+}
+
+// Vertical blur pass (similar structure)
+void verticalBlur(AccurateImage *imageOut, AccurateImage *imageIn, int colourType, int size) {
+    for (int x = 0; x < imageIn->x; x++) {
+		for (int y = 0; y < imageIn->y; y++) {
+			float sum = 0.0f;
+			int count = 0;
+			for (int dy = -size; dy <= size; dy++) {
+				int currentY = y + dy;
+				if (currentY < 0 || currentY >= imageIn->y) continue;
+				int offset = currentY * imageIn->x + x;
+				sum += (colourType == 0) ? imageIn->data[offset].red :
+					   (colourType == 1) ? imageIn->data[offset].green : imageIn->data[offset].blue;
+				count++;
 			}
-
-			// Now we compute the final value
-			double value = sum / countIncluded;
-
-
-			// Update the output image
-			int numberOfValuesInEachRow = imageOut->x; // R, G and B
-			int offsetOfThePixel = (numberOfValuesInEachRow * senterY + senterX);
-			if(colourType == 0)
-				imageOut->data[offsetOfThePixel].red = value;
-			if(colourType == 1)
-				imageOut->data[offsetOfThePixel].green = value;
-			if(colourType == 2)
-				imageOut->data[offsetOfThePixel].blue = value;
+			int outOffset = y * imageOut->x + x;
+			float avg = sum / count;
+			if (colourType == 0) imageOut->data[outOffset].red = avg;
+			else if (colourType == 1) imageOut->data[outOffset].green = avg;
+			else imageOut->data[outOffset].blue = avg;
 		}
-
 	}
-	
+}
+
+// Replace blurIteration with:
+void blurIteration(AccurateImage *out, AccurateImage *in, int colourType, int size) {
+    horizontalBlur(out, in, colourType, size);
+    verticalBlur(out, out, colourType, size); // Reuse output as input for vertical pass
 }
 
 
+
+////////////////////////////////////////
 // Perform the final step, and return it as ppm.
 PPMImage * imageDifference(AccurateImage *imageInSmall, AccurateImage *imageInLarge) {
 	PPMImage *imageOut;
